@@ -92,7 +92,7 @@ const iceCreamCustomizations = [
   { id: "whip", name: "Whipped Cream", options: ["regular", "none (-$0.15)", "extra whip (+$0.30)"] },
 ];
 
-// Soft drinks customizations (with ice options)
+// Soft drinks customizations
 const softDrinkCustomizations = [
   { id: "ice", name: "Ice", options: ["regular", "no ice (-$0.20)", "light ice (-$0.10)", "extra ice"] },
   { id: "straw", name: "Straw", options: ["regular", "no straw", "extra straws"] },
@@ -113,16 +113,17 @@ const happyMealCustomizations = [
   { id: "toy", name: "Toy Preference", options: ["Any toy", "Boy toy", "Girl toy", "No toy please"] },
 ];
 
-// Wrap customizations
+// Wrap customizations - comprehensive
 const wrapCustomizations = [
   { id: "tortilla", name: "Tortilla", options: ["as included", "flour", "whole wheat (+$0.25)", "spinach (+$0.25)", "tomato basil (+$0.25)"] },
   { id: "protein", name: "Protein", options: ["as included", "extra protein (+$2.00)", "no protein (-$1.50)", "grilled chicken", "crispy chicken (+$0.50)"] },
-  { id: "lettuce", name: "Lettuce", options: ["as included", "extra lettuce (+$0.25)", "no lettuce (-$0.10)"] },
-  { id: "tomato", name: "Tomato", options: ["as included", "extra tomato (+$0.30)", "no tomato (-$0.10)"] },
-  { id: "cheese", name: "Cheese", options: ["as included", "extra cheese (+$0.50)", "no cheese (-$0.30)", "cheddar", "pepper jack (+$0.25)", "swiss (+$0.25)"] },
-  { id: "onion", name: "Onion", options: ["as included", "extra onion (+$0.25)", "no onion (-$0.10)", "grilled onion (+$0.35)"] },
+  { id: "lettuce", name: "Lettuce", options: ["as included", "extra (+$0.25)", "no lettuce (-$0.10)"] },
+  { id: "tomato", name: "Tomato", options: ["as included", "extra (+$0.30)", "no tomato (-$0.10)"] },
+  { id: "cheese", name: "Cheese", options: ["as included", "extra (+$0.50)", "no cheese (-$0.30)", "cheddar", "pepper jack (+$0.25)", "swiss (+$0.25)"] },
+  { id: "onion", name: "Onion", options: ["as included", "extra (+$0.25)", "no onion (-$0.10)", "grilled (+$0.35)"] },
   { id: "bacon", name: "Bacon", options: ["none", "add bacon (+$1.50)", "extra bacon (+$2.50)"] },
   { id: "avocado", name: "Avocado", options: ["none", "add avocado (+$1.50)", "extra avocado (+$2.25)"] },
+  { id: "sauce", name: "Sauce", options: ["as included", "ranch", "honey mustard", "buffalo", "no sauce"] },
 ];
 
 // Combo meal customizations
@@ -149,17 +150,15 @@ const sauceEligibleCategories = [
   "salads",
   "combos",
   "international",
-  "chicken" // for chicken sandwiches
+  "chicken"
 ];
 
 function isSauceEligible(category: string, itemName: string): boolean {
   const cat = category.toLowerCase();
   const name = itemName.toLowerCase();
   
-  // Check if item is in eligible categories
   if (sauceEligibleCategories.some(c => cat.includes(c))) return true;
   
-  // Also check item name for burgers, sandwiches, wraps, salads
   if (name.includes("burger") || name.includes("sandwich") || name.includes("wrap") || 
       name.includes("salad") || name.includes("quarter pounder") || name.includes("big mac") ||
       name.includes("filet-o") || name.includes("mcchicken") || name.includes("mcarabia") ||
@@ -261,18 +260,17 @@ function getCustomizationOptions(itemName: string, category: string) {
 // Generate dynamic salad customization based on what's included
 function getSaladCustomizations(itemIncludes: string[] = []) {
   const customizations: { id: string; name: string; options: string[] }[] = [];
+  const includesLower = itemIncludes.map(i => i.toLowerCase());
   
-  // Standard salad options
+  // Dressing is always available
   customizations.push({
     id: "dressing",
     name: "Dressing",
-    options: ["as included", "on the side", "Ranch", "Caesar", "Balsamic Vinaigrette", "Italian", "Honey Mustard", "Thousand Island", "Blue Cheese", "none"]
+    options: ["as included", "on the side", "Ranch", "Caesar", "Balsamic Vinaigrette", "Italian", "Honey Mustard", "Thousand Island", "Blue Cheese", "no dressing (-$0.25)"]
   });
   
-  // Check what's in the salad and add options
-  const includesLower = itemIncludes.map(i => i.toLowerCase());
-  
-  if (includesLower.some(i => i.includes("chicken"))) {
+  // Protein options
+  if (includesLower.some(i => i.includes("chicken") || i.includes("grilled") || i.includes("crispy"))) {
     customizations.push({
       id: "protein",
       name: "Protein",
@@ -282,10 +280,11 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
     customizations.push({
       id: "protein",
       name: "Add Protein",
-      options: ["none", "add grilled chicken (+$3.00)", "add crispy chicken (+$3.00)"]
+      options: ["none", "add grilled chicken (+$3.00)", "add crispy chicken (+$3.50)"]
     });
   }
   
+  // Bacon
   if (includesLower.some(i => i.includes("bacon"))) {
     customizations.push({
       id: "bacon",
@@ -295,11 +294,12 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
   } else {
     customizations.push({
       id: "bacon",
-      name: "Add Bacon",
+      name: "Bacon",
       options: ["none", "add bacon (+$1.50)", "extra bacon (+$2.50)"]
     });
   }
   
+  // Cheese
   if (includesLower.some(i => i.includes("cheese") || i.includes("parmesan") || i.includes("feta"))) {
     customizations.push({
       id: "cheese",
@@ -309,11 +309,12 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
   } else {
     customizations.push({
       id: "cheese",
-      name: "Add Cheese",
-      options: ["none", "add parmesan (+$0.75)", "add feta (+$0.75)", "add cheddar (+$0.75)"]
+      name: "Cheese",
+      options: ["none", "add parmesan (+$0.75)", "add feta (+$0.85)", "add cheddar (+$0.75)"]
     });
   }
   
+  // Croutons
   if (includesLower.some(i => i.includes("crouton"))) {
     customizations.push({
       id: "croutons",
@@ -323,11 +324,12 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
   } else {
     customizations.push({
       id: "croutons",
-      name: "Add Croutons",
+      name: "Croutons",
       options: ["none", "add croutons (+$0.50)"]
     });
   }
   
+  // Tomatoes
   if (includesLower.some(i => i.includes("tomato"))) {
     customizations.push({
       id: "tomatoes",
@@ -336,6 +338,7 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
     });
   }
   
+  // Onions
   if (includesLower.some(i => i.includes("onion"))) {
     customizations.push({
       id: "onions",
@@ -344,6 +347,7 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
     });
   }
   
+  // Cucumbers
   if (includesLower.some(i => i.includes("cucumber"))) {
     customizations.push({
       id: "cucumbers",
@@ -352,6 +356,7 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
     });
   }
   
+  // Olives
   if (includesLower.some(i => i.includes("olive"))) {
     customizations.push({
       id: "olives",
@@ -360,6 +365,7 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
     });
   }
   
+  // Avocado
   if (includesLower.some(i => i.includes("avocado"))) {
     customizations.push({
       id: "avocado",
@@ -369,11 +375,12 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
   } else {
     customizations.push({
       id: "avocado",
-      name: "Add Avocado",
+      name: "Avocado",
       options: ["none", "add avocado (+$1.50)"]
     });
   }
   
+  // Egg
   if (includesLower.some(i => i.includes("egg"))) {
     customizations.push({
       id: "egg",
@@ -382,15 +389,17 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
     });
   }
   
+  // Beans/Corn
   if (includesLower.some(i => i.includes("bean") || i.includes("corn"))) {
     customizations.push({
       id: "beans_corn",
       name: "Beans & Corn",
-      options: ["as included", "extra (+$0.50)", "no beans (-$0.25)", "no corn (-$0.25)", "no beans or corn (-$0.40)"]
+      options: ["as included", "extra (+$0.50)", "no beans (-$0.25)", "no corn (-$0.25)", "none (-$0.40)"]
     });
   }
   
-  if (includesLower.some(i => i.includes("tortilla") || i.includes("wonton"))) {
+  // Tortilla strips / wonton
+  if (includesLower.some(i => i.includes("tortilla") || i.includes("wonton") || i.includes("strip"))) {
     customizations.push({
       id: "crunchy_topping",
       name: "Crunchy Topping",
@@ -398,7 +407,8 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
     });
   }
   
-  if (includesLower.some(i => i.includes("almond") || i.includes("nut"))) {
+  // Nuts
+  if (includesLower.some(i => i.includes("almond") || i.includes("nut") || i.includes("pecan"))) {
     customizations.push({
       id: "nuts",
       name: "Nuts",
@@ -409,16 +419,139 @@ function getSaladCustomizations(itemIncludes: string[] = []) {
   return customizations;
 }
 
+// Sauce selection popup component
+interface SauceSelectPopupProps {
+  sauce: typeof condimentsData[0];
+  onSelect: (type: 'regular' | 'extra', quantity: number) => void;
+  onClose: () => void;
+}
+
+function SauceSelectPopup({ sauce, onSelect, onClose }: SauceSelectPopupProps) {
+  const [selectedType, setSelectedType] = useState<'regular' | 'extra' | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  
+  const handleConfirm = () => {
+    if (selectedType) {
+      onSelect(selectedType, quantity);
+    }
+  };
+  
+  const currentPrice = selectedType === 'regular' 
+    ? sauce.regularPrice 
+    : selectedType === 'extra' 
+    ? sauce.extraPrice 
+    : 0;
+  
+  return (
+    <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-sm border border-white/20 animate-fadeIn">
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="text-lg font-bold text-white">{sauce.name}</h4>
+          <button onClick={onClose} className="text-white/60 hover:text-white">
+            <X size={20} />
+          </button>
+        </div>
+        
+        <p className="text-white/60 text-sm mb-4">{sauce.calories} calories per serving</p>
+        
+        <div className="space-y-3 mb-6">
+          <button
+            onClick={() => setSelectedType('regular')}
+            className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+              selectedType === 'regular' 
+                ? 'border-pink-500 bg-pink-500/20' 
+                : 'border-white/20 bg-white/5 hover:border-white/40'
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-white font-medium">Regular</div>
+                <div className="text-white/50 text-sm">Standard portion</div>
+              </div>
+              <div className="text-pink-400 font-bold">
+                {sauce.regularPrice > 0 ? `$${sauce.regularPrice.toFixed(2)}` : 'Free'}
+              </div>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => setSelectedType('extra')}
+            className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+              selectedType === 'extra' 
+                ? 'border-pink-500 bg-pink-500/20' 
+                : 'border-white/20 bg-white/5 hover:border-white/40'
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-white font-medium">Extra</div>
+                <div className="text-white/50 text-sm">Double portion</div>
+              </div>
+              <div className="text-pink-400 font-bold">
+                {sauce.extraPrice > 0 ? `$${sauce.extraPrice.toFixed(2)}` : 'Free'}
+              </div>
+            </div>
+          </button>
+        </div>
+        
+        {selectedType && (
+          <div className="mb-6">
+            <div className="text-white/70 text-sm mb-2 text-center">Quantity</div>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-10 h-10 rounded-full border border-pink-400 text-pink-400 flex items-center justify-center hover:bg-pink-400 hover:text-black transition-colors"
+              >
+                <Minus size={18} />
+              </button>
+              <span className="text-2xl font-bold text-white w-12 text-center">{quantity}</span>
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="w-10 h-10 rounded-full bg-pink-500 text-black flex items-center justify-center hover:bg-pink-400 transition-colors"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+            <div className="text-center mt-2 text-pink-400 font-semibold">
+              Total: {currentPrice * quantity > 0 ? `$${(currentPrice * quantity).toFixed(2)}` : 'Free'}
+            </div>
+          </div>
+        )}
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!selectedType}
+            className="flex-1 py-3 bg-pink-500 hover:bg-pink-400 text-black font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Add Sauce
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CustomizationPopup({ itemName, category, itemIncludes = [], onConfirm, onClose }: CustomizationPopupProps) {
   const isSalad = category.toLowerCase().includes("salad") || itemName.toLowerCase().includes("salad");
+  const isWrap = category.toLowerCase().includes("wrap") || itemName.toLowerCase().includes("wrap");
   const showSauceStep = isSauceEligible(category, itemName);
   
   const customizationOptions = useMemo(() => {
     if (isSalad) {
       return getSaladCustomizations(itemIncludes);
     }
+    if (isWrap) {
+      return wrapCustomizations;
+    }
     return getCustomizationOptions(itemName, category);
-  }, [itemName, category, isSalad, itemIncludes]);
+  }, [itemName, category, isSalad, isWrap, itemIncludes]);
 
   const [step, setStep] = useState<'customize' | 'sauces'>('customize');
   const [customizations, setCustomizations] = useState<Record<string, string>>(() => {
@@ -439,6 +572,7 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
   const [specialNotes, setSpecialNotes] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedSauces, setSelectedSauces] = useState<SauceSelection[]>([]);
+  const [saucePopup, setSaucePopup] = useState<typeof condimentsData[0] | null>(null);
 
   const handleChange = (id: string, value: string) => {
     setCustomizations((prev) => ({
@@ -447,62 +581,36 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
     }));
   };
 
-  const handleAddSauce = (sauceId: string, type: 'regular' | 'extra') => {
-    const sauce = condimentsData.find(c => c.id === sauceId);
-    if (!sauce) return;
-    
+  const handleSauceSelect = (sauce: typeof condimentsData[0], type: 'regular' | 'extra', qty: number) => {
     const price = type === 'regular' ? (sauce.regularPrice || 0) : (sauce.extraPrice || 0);
     
     setSelectedSauces(prev => {
       // Check if this sauce with same type already exists
       const existingIndex = prev.findIndex(s => s.name === sauce.name && s.type === type);
       if (existingIndex >= 0) {
-        // Increase quantity
+        // Add to existing quantity
         const updated = [...prev];
         updated[existingIndex] = {
           ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + 1
+          quantity: updated[existingIndex].quantity + qty
         };
         return updated;
       }
-      // Add new sauce
+      // Add new sauce entry
       return [...prev, {
         name: sauce.name,
         type,
-        quantity: 1,
+        quantity: qty,
         price,
         calories: sauce.calories
       }];
     });
-  };
-
-  const handleRemoveSauce = (sauceId: string, type: 'regular' | 'extra') => {
-    const sauce = condimentsData.find(c => c.id === sauceId);
-    if (!sauce) return;
     
-    setSelectedSauces(prev => {
-      const existingIndex = prev.findIndex(s => s.name === sauce.name && s.type === type);
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        if (updated[existingIndex].quantity > 1) {
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            quantity: updated[existingIndex].quantity - 1
-          };
-        } else {
-          updated.splice(existingIndex, 1);
-        }
-        return updated;
-      }
-      return prev;
-    });
+    setSaucePopup(null);
   };
 
-  const getSauceQuantity = (sauceId: string, type: 'regular' | 'extra') => {
-    const sauce = condimentsData.find(c => c.id === sauceId);
-    if (!sauce) return 0;
-    const found = selectedSauces.find(s => s.name === sauce.name && s.type === type);
-    return found?.quantity || 0;
+  const handleRemoveSauce = (index: number) => {
+    setSelectedSauces(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleConfirm = () => {
@@ -529,7 +637,7 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
   const groupedOptions = useMemo(() => {
     const groups: { title: string; options: typeof customizationOptions }[] = [];
     
-    // For salads and wraps, use simpler grouping to ensure all options show
+    // For salads, use clear grouping
     if (isSalad) {
       const dressingOpts = customizationOptions.filter(c => c.id === "dressing");
       const proteinOpts = customizationOptions.filter(c => c.id === "protein");
@@ -543,15 +651,16 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
     }
     
     // For wraps
-    const isWrap = category.toLowerCase().includes("wrap") || itemName.toLowerCase().includes("wrap");
     if (isWrap) {
       const tortillaOpts = customizationOptions.filter(c => c.id === "tortilla");
       const proteinOpts = customizationOptions.filter(c => c.id === "protein");
-      const toppingOpts = customizationOptions.filter(c => !["tortilla", "protein"].includes(c.id));
+      const sauceOpts = customizationOptions.filter(c => c.id === "sauce");
+      const toppingOpts = customizationOptions.filter(c => !["tortilla", "protein", "sauce"].includes(c.id));
       
       if (tortillaOpts.length > 0) groups.push({ title: "Tortilla", options: tortillaOpts });
       if (proteinOpts.length > 0) groups.push({ title: "Protein", options: proteinOpts });
-      if (toppingOpts.length > 0) groups.push({ title: "Toppings & Ingredients", options: toppingOpts });
+      if (toppingOpts.length > 0) groups.push({ title: "Toppings & Add-ons", options: toppingOpts });
+      if (sauceOpts.length > 0) groups.push({ title: "Sauce", options: sauceOpts });
       
       return groups;
     }
@@ -573,7 +682,7 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
     if (otherOpts.length > 0) groups.push({ title: "Other Options", options: otherOpts });
     
     return groups;
-  }, [customizationOptions, isSalad, category, itemName]);
+  }, [customizationOptions, isSalad, isWrap]);
 
   const totalSauceCost = selectedSauces.reduce((sum, s) => sum + (s.price * s.quantity), 0);
 
@@ -613,29 +722,35 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
 
         {step === 'customize' ? (
           <div className="space-y-6">
-            {groupedOptions.map((group) => (
-              <div key={group.title}>
-                <h4 className="text-pink-400 font-semibold text-sm mb-3 uppercase tracking-wide">{group.title}</h4>
-                <div className="space-y-3">
-                  {group.options.map((option) => (
-                    <div key={option.id}>
-                      <label className="block text-white/80 text-sm mb-1">{option.name}</label>
-                      <select
-                        value={customizations[option.id] || option.options[0]}
-                        onChange={(e) => handleChange(option.id, e.target.value)}
-                        className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-pink-400 text-sm"
-                      >
-                        {option.options.map((opt) => (
-                          <option key={opt} value={opt} className="bg-gray-800">
-                            {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
+            {groupedOptions.length > 0 ? (
+              groupedOptions.map((group) => (
+                <div key={group.title}>
+                  <h4 className="text-pink-400 font-semibold text-sm mb-3 uppercase tracking-wide">{group.title}</h4>
+                  <div className="space-y-3">
+                    {group.options.map((option) => (
+                      <div key={option.id}>
+                        <label className="block text-white/80 text-sm mb-1">{option.name}</label>
+                        <select
+                          value={customizations[option.id] || option.options[0]}
+                          onChange={(e) => handleChange(option.id, e.target.value)}
+                          className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-pink-400 text-sm"
+                        >
+                          {option.options.map((opt) => (
+                            <option key={opt} value={opt} className="bg-gray-800">
+                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-white/60 text-center py-4">
+                No customization options available for this item.
               </div>
-            ))}
+            )}
 
             <div>
               <h4 className="text-pink-400 font-semibold text-sm mb-3 uppercase tracking-wide">Quantity</h4>
@@ -681,103 +796,57 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
           <div className="space-y-4">
             <div className="p-4 bg-white/5 rounded-xl border border-white/10 mb-4">
               <p className="text-white/80 text-sm">
-                Add sauces to your {itemName}. Select regular or extra amount for each sauce.
+                Tap a sauce to add it. Choose regular or extra amount.
               </p>
-              {totalSauceCost > 0 && (
-                <p className="text-pink-400 font-semibold mt-2">
-                  Sauce Total: +${totalSauceCost.toFixed(2)}
-                </p>
-              )}
             </div>
 
             {/* Selected sauces summary */}
             {selectedSauces.length > 0 && (
               <div className="p-4 bg-pink-500/10 rounded-xl border border-pink-500/30 mb-4">
-                <h4 className="text-pink-400 font-semibold text-sm mb-2">Selected Sauces:</h4>
-                <div className="space-y-1">
+                <h4 className="text-pink-400 font-semibold text-sm mb-3">Selected Sauces:</h4>
+                <div className="space-y-2">
                   {selectedSauces.map((sauce, idx) => (
-                    <div key={idx} className="text-sm text-white/80 flex justify-between">
-                      <span>{sauce.quantity}x {sauce.name} ({sauce.type})</span>
-                      <span className="text-pink-400">
-                        {sauce.price > 0 ? `+$${(sauce.price * sauce.quantity).toFixed(2)}` : 'Free'}
-                      </span>
+                    <div key={idx} className="flex justify-between items-center bg-white/5 rounded-lg p-2">
+                      <div className="text-sm text-white/80">
+                        {sauce.quantity}x {sauce.name} <span className="text-white/50">({sauce.type})</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-pink-400 font-semibold">
+                          {sauce.price > 0 ? `+$${(sauce.price * sauce.quantity).toFixed(2)}` : 'Free'}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveSauce(idx)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
                     </div>
                   ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-pink-500/30 flex justify-between">
+                  <span className="text-white/70 text-sm">Sauce Total:</span>
+                  <span className="text-pink-400 font-bold">
+                    {totalSauceCost > 0 ? `+$${totalSauceCost.toFixed(2)}` : 'Free'}
+                  </span>
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 max-h-[40vh] overflow-y-auto">
-              {condimentsData.map((sauce) => {
-                const regularQty = getSauceQuantity(sauce.id, 'regular');
-                const extraQty = getSauceQuantity(sauce.id, 'extra');
-                
-                return (
-                  <div
-                    key={sauce.id}
-                    className="bg-white/5 rounded-xl p-4 border border-white/10"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="text-white font-medium">{sauce.name}</div>
-                        <div className="text-xs text-white/50">{sauce.calories} cal</div>
-                      </div>
-                    </div>
-                    
-                    {/* Regular option */}
-                    <div className="flex items-center justify-between mb-2 bg-white/5 rounded-lg p-2">
-                      <div>
-                        <span className="text-white/80 text-sm">Regular</span>
-                        <span className="text-white/50 text-xs ml-2">
-                          {sauce.regularPrice > 0 ? `$${sauce.regularPrice.toFixed(2)}` : 'Free'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleRemoveSauce(sauce.id, 'regular')}
-                          disabled={regularQty === 0}
-                          className="w-7 h-7 rounded-full border border-pink-400 text-pink-400 flex items-center justify-center hover:bg-pink-400 hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-sm"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="w-6 text-center text-white font-bold text-sm">{regularQty}</span>
-                        <button
-                          onClick={() => handleAddSauce(sauce.id, 'regular')}
-                          className="w-7 h-7 rounded-full bg-pink-500 text-black flex items-center justify-center hover:bg-pink-400 transition-colors text-sm"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Extra option */}
-                    <div className="flex items-center justify-between bg-white/5 rounded-lg p-2">
-                      <div>
-                        <span className="text-white/80 text-sm">Extra</span>
-                        <span className="text-white/50 text-xs ml-2">
-                          {sauce.extraPrice > 0 ? `$${sauce.extraPrice.toFixed(2)}` : 'Free'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleRemoveSauce(sauce.id, 'extra')}
-                          disabled={extraQty === 0}
-                          className="w-7 h-7 rounded-full border border-pink-400 text-pink-400 flex items-center justify-center hover:bg-pink-400 hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-sm"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="w-6 text-center text-white font-bold text-sm">{extraQty}</span>
-                        <button
-                          onClick={() => handleAddSauce(sauce.id, 'extra')}
-                          className="w-7 h-7 rounded-full bg-pink-500 text-black flex items-center justify-center hover:bg-pink-400 transition-colors text-sm"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                    </div>
+            <div className="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto">
+              {condimentsData.map((sauce) => (
+                <button
+                  key={sauce.id}
+                  onClick={() => setSaucePopup(sauce)}
+                  className="bg-white/5 hover:bg-white/10 rounded-xl p-4 border border-white/10 hover:border-pink-500/50 transition-all text-left"
+                >
+                  <div className="text-white font-medium text-sm">{sauce.name}</div>
+                  <div className="text-white/50 text-xs mt-1">{sauce.calories} cal</div>
+                  <div className="text-pink-400/70 text-xs mt-1">
+                    {sauce.regularPrice > 0 ? `from $${sauce.regularPrice.toFixed(2)}` : 'Free'}
                   </div>
-                );
-              })}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -805,6 +874,15 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
           </button>
         </div>
       </div>
+      
+      {/* Sauce selection popup */}
+      {saucePopup && (
+        <SauceSelectPopup
+          sauce={saucePopup}
+          onSelect={(type, qty) => handleSauceSelect(saucePopup, type, qty)}
+          onClose={() => setSaucePopup(null)}
+        />
+      )}
     </div>
   );
 }

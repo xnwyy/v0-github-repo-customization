@@ -30,8 +30,8 @@ function calculateWaitTime(orderItems: Record<string, OrderItem>, pickupMethod: 
     }
   });
   
-  // Delivery adds significant extra time regardless of items
-  const deliveryBonus = pickupMethod === "delivery" ? Math.floor(Math.random() * 10) + 15 : 0;
+  // Delivery adds significant extra time regardless of items (15-25 mins extra)
+  const deliveryBonus = pickupMethod === "delivery" ? Math.floor(Math.random() * 11) + 15 : 0;
   
   // Base prep time for your order: 3-5 minutes minimum
   const basePrepTime = Math.floor(Math.random() * 3) + 3 + (totalItems * 0.5);
@@ -55,23 +55,23 @@ function formatTime(minutes: number): string {
 
 export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: ConfirmationStepProps) {
   const [waitTime, setWaitTime] = useState<number | null>(null);
-  const [ordersInQueue, setOrdersInQueue] = useState<number>(0);
+  const [ordersAhead, setOrdersAhead] = useState<number>(0);
   const [placeInLine, setPlaceInLine] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(true);
 
   useEffect(() => {
     // Simulate calculation delay for effect
     const timer = setTimeout(() => {
-      // Random number of orders in queue: 2-15
-      const queueCount = Math.floor(Math.random() * 14) + 2;
-      setOrdersInQueue(queueCount);
+      // Completely random number of orders ahead: 1-12
+      const randomOrdersAhead = Math.floor(Math.random() * 12) + 1;
+      setOrdersAhead(randomOrdersAhead);
       
-      const time = calculateWaitTime(orderItems, pickupMethod, queueCount);
+      const time = calculateWaitTime(orderItems, pickupMethod, randomOrdersAhead);
       setWaitTime(time);
       
-      // For dine-in, generate a random place in line
+      // For dine-in, generate a random place in line number (1-99)
       if (pickupMethod === "dine-in") {
-        setPlaceInLine(Math.floor(Math.random() * queueCount) + 1);
+        setPlaceInLine(Math.floor(Math.random() * 99) + 1);
       }
       
       setIsCalculating(false);
@@ -83,6 +83,7 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
   const totalItems = Object.values(orderItems).reduce((sum, item) => sum + item.quantity, 0);
   const isDelivery = pickupMethod === "delivery";
   const isDineIn = pickupMethod === "dine-in";
+  const isPickup = pickupMethod === "pickup";
 
   return (
     <section className="max-w-md mx-auto text-center animate-fadeIn">
@@ -90,20 +91,23 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
       <h3 className="text-3xl font-bold text-green-400 mb-4">Order Submitted Successfully!</h3>
       
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6 border border-white/20">
-        {/* Orders in queue */}
-        <div className="text-white/70 mb-2 text-sm">
-          Orders ahead of you: <span className="text-pink-400 font-semibold">{ordersInQueue}</span>
-        </div>
-        
         {/* Place in line for dine-in */}
         {isDineIn && placeInLine && !isCalculating && (
-          <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-3 mb-4">
-            <div className="text-yellow-400 font-bold text-lg">
-              Your number: #{placeInLine}
+          <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-4 mb-4">
+            <div className="text-yellow-400/70 text-sm mb-1">Your Order Number</div>
+            <div className="text-yellow-400 font-bold text-4xl">
+              #{placeInLine}
             </div>
-            <div className="text-yellow-400/70 text-xs">
+            <div className="text-yellow-400/70 text-xs mt-2">
               Listen for your number to be called
             </div>
+          </div>
+        )}
+
+        {/* Orders ahead - only for dine-in and pickup, NOT delivery */}
+        {(isDineIn || isPickup) && !isCalculating && (
+          <div className="text-white/70 mb-3 text-sm">
+            Orders ahead of you: <span className="text-pink-400 font-semibold">{ordersAhead}</span>
           </div>
         )}
         
@@ -121,9 +125,16 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
             <div className="text-4xl font-bold text-pink-400 mb-2">
               {formatTime(waitTime!)}
             </div>
-            <div className="text-white/50 text-sm">
-              Based on {ordersInQueue} order{ordersInQueue !== 1 ? 's' : ''} in queue
-            </div>
+            {(isDineIn || isPickup) && (
+              <div className="text-white/50 text-sm">
+                Based on {ordersAhead} order{ordersAhead !== 1 ? 's' : ''} ahead
+              </div>
+            )}
+            {isDelivery && (
+              <div className="text-white/50 text-sm">
+                Includes travel time to your location
+              </div>
+            )}
             <div className="text-white/40 text-xs mt-1">
               Your order has {totalItems} item{totalItems !== 1 ? 's' : ''}
             </div>
@@ -135,8 +146,8 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
         <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-4 mb-6">
           <div className="text-yellow-400 text-sm">
             {waitTime > 45 
-              ? "🔥 We're a bit busy right now! Thanks for your patience."
-              : "⏰ There are several orders ahead of you. Thanks for waiting!"}
+              ? "We're a bit busy right now! Thanks for your patience."
+              : "There are several orders ahead of you. Thanks for waiting!"}
           </div>
         </div>
       )}
@@ -144,7 +155,7 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
       {isDelivery && (
         <div className="bg-blue-500/20 border border-blue-500/40 rounded-lg p-4 mb-6">
           <div className="text-blue-400 text-sm">
-            🚗 Delivery times include travel time to your location
+            Your driver will text you when they&apos;re on the way
           </div>
         </div>
       )}
@@ -154,7 +165,7 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
           ? "Your order is being prepared and will be delivered to your address soon."
           : isDineIn
           ? "Please wait for your number to be called at the counter."
-          : "Please proceed to the counter when your order number is called."}
+          : "Please proceed to the counter when your order is ready."}
       </p>
 
       <button
