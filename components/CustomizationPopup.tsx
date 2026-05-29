@@ -449,54 +449,64 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
 
               {/* Sauce Amount Popup */}
               {saucePopup && (
-                <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={() => setSaucePopup(null)}>
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setSaucePopup(null)}>
                   <div 
-                    className="bg-gray-900 rounded-xl p-5 w-full max-w-xs border border-white/20 shadow-xl animate-fadeIn"
+                    className="bg-black/90 rounded-2xl p-6 w-full max-w-xs border border-white/20 shadow-xl animate-fadeIn"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <h4 className="text-white font-bold text-lg mb-1">{saucePopup}</h4>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl font-bold text-white">{saucePopup}</h3>
+                      <button
+                        onClick={() => setSaucePopup(null)}
+                        className="text-white/60 hover:text-white transition-colors"
+                      >
+                        <X size={24} />
+                      </button>
+                    </div>
                     <p className="text-white/60 text-sm mb-4">Select amount</p>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <button
                         onClick={() => selectSauceAmount(saucePopup, 'regular')}
-                        className={`w-full py-3 px-4 rounded-lg text-left flex justify-between items-center transition-all ${
+                        className={`w-full py-3 px-4 rounded-xl text-left flex justify-between items-center transition-all ${
                           selectedSauces[saucePopup] === 'regular'
                             ? 'bg-pink-500 text-black font-medium'
-                            : 'bg-white/10 text-white hover:bg-white/20'
+                            : 'bg-white/5 text-white hover:bg-white/10'
                         }`}
                       >
-                        <span>Regular</span>
+                        <span className="font-medium">Regular</span>
                         <span className="text-sm opacity-80">+$0.25</span>
                       </button>
                       <button
                         onClick={() => selectSauceAmount(saucePopup, 'extra')}
-                        className={`w-full py-3 px-4 rounded-lg text-left flex justify-between items-center transition-all ${
+                        className={`w-full py-3 px-4 rounded-xl text-left flex justify-between items-center transition-all ${
                           selectedSauces[saucePopup] === 'extra'
                             ? 'bg-pink-500 text-black font-medium'
-                            : 'bg-white/10 text-white hover:bg-white/20'
+                            : 'bg-white/5 text-white hover:bg-white/10'
                         }`}
                       >
-                        <span>Extra</span>
+                        <span className="font-medium">Extra</span>
                         <span className="text-sm opacity-80">+$0.50</span>
                       </button>
                       
                       {selectedSauces[saucePopup] && (
                         <button
                           onClick={() => removeSauce(saucePopup)}
-                          className="w-full py-3 px-4 rounded-lg text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all mt-2"
+                          className="w-full py-3 px-4 rounded-xl text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all mt-2"
                         >
                           Remove
                         </button>
                       )}
                     </div>
                     
-                    <button
-                      onClick={() => setSaucePopup(null)}
-                      className="w-full py-2 mt-4 text-white/60 hover:text-white text-sm transition-colors"
-                    >
-                      Cancel
-                    </button>
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        onClick={() => setSaucePopup(null)}
+                        className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
