@@ -115,11 +115,14 @@ const happyMealCustomizations = [
 
 // Wrap customizations
 const wrapCustomizations = [
-  { id: "tortilla", name: "Tortilla", options: ["flour", "whole wheat", "spinach"] },
-  { id: "protein", name: "Protein", options: ["grilled chicken", "crispy chicken", "no protein"] },
-  { id: "lettuce", name: "Lettuce", options: ["regular", "none", "extra"] },
-  { id: "cheese", name: "Cheese", options: ["cheddar", "none", "extra cheese", "pepper jack"] },
-  { id: "tomato", name: "Tomato", options: ["regular", "none", "extra"] },
+  { id: "tortilla", name: "Tortilla", options: ["as included", "flour", "whole wheat (+$0.25)", "spinach (+$0.25)", "tomato basil (+$0.25)"] },
+  { id: "protein", name: "Protein", options: ["as included", "extra protein (+$2.00)", "no protein (-$1.50)", "grilled chicken", "crispy chicken (+$0.50)"] },
+  { id: "lettuce", name: "Lettuce", options: ["as included", "extra lettuce (+$0.25)", "no lettuce (-$0.10)"] },
+  { id: "tomato", name: "Tomato", options: ["as included", "extra tomato (+$0.30)", "no tomato (-$0.10)"] },
+  { id: "cheese", name: "Cheese", options: ["as included", "extra cheese (+$0.50)", "no cheese (-$0.30)", "cheddar", "pepper jack (+$0.25)", "swiss (+$0.25)"] },
+  { id: "onion", name: "Onion", options: ["as included", "extra onion (+$0.25)", "no onion (-$0.10)", "grilled onion (+$0.35)"] },
+  { id: "bacon", name: "Bacon", options: ["none", "add bacon (+$1.50)", "extra bacon (+$2.50)"] },
+  { id: "avocado", name: "Avocado", options: ["none", "add avocado (+$1.50)", "extra avocado (+$2.25)"] },
 ];
 
 // Combo meal customizations
@@ -145,7 +148,8 @@ const sauceEligibleCategories = [
   "wraps",
   "salads",
   "combos",
-  "international"
+  "international",
+  "chicken" // for chicken sandwiches
 ];
 
 function isSauceEligible(category: string, itemName: string): boolean {
@@ -159,7 +163,7 @@ function isSauceEligible(category: string, itemName: string): boolean {
   if (name.includes("burger") || name.includes("sandwich") || name.includes("wrap") || 
       name.includes("salad") || name.includes("quarter pounder") || name.includes("big mac") ||
       name.includes("filet-o") || name.includes("mcchicken") || name.includes("mcarabia") ||
-      name.includes("mcspicy") || name.includes("combo")) {
+      name.includes("mcspicy") || name.includes("combo") || name.includes("snack wrap")) {
     return true;
   }
   
@@ -525,6 +529,33 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
   const groupedOptions = useMemo(() => {
     const groups: { title: string; options: typeof customizationOptions }[] = [];
     
+    // For salads and wraps, use simpler grouping to ensure all options show
+    if (isSalad) {
+      const dressingOpts = customizationOptions.filter(c => c.id === "dressing");
+      const proteinOpts = customizationOptions.filter(c => c.id === "protein");
+      const toppingOpts = customizationOptions.filter(c => !["dressing", "protein"].includes(c.id));
+      
+      if (dressingOpts.length > 0) groups.push({ title: "Dressing", options: dressingOpts });
+      if (proteinOpts.length > 0) groups.push({ title: "Protein", options: proteinOpts });
+      if (toppingOpts.length > 0) groups.push({ title: "Toppings & Ingredients", options: toppingOpts });
+      
+      return groups;
+    }
+    
+    // For wraps
+    const isWrap = category.toLowerCase().includes("wrap") || itemName.toLowerCase().includes("wrap");
+    if (isWrap) {
+      const tortillaOpts = customizationOptions.filter(c => c.id === "tortilla");
+      const proteinOpts = customizationOptions.filter(c => c.id === "protein");
+      const toppingOpts = customizationOptions.filter(c => !["tortilla", "protein"].includes(c.id));
+      
+      if (tortillaOpts.length > 0) groups.push({ title: "Tortilla", options: tortillaOpts });
+      if (proteinOpts.length > 0) groups.push({ title: "Protein", options: proteinOpts });
+      if (toppingOpts.length > 0) groups.push({ title: "Toppings & Ingredients", options: toppingOpts });
+      
+      return groups;
+    }
+    
     const breadOpts = customizationOptions.filter(c => c.id === "bread" || c.id === "tortilla");
     const proteinOpts = customizationOptions.filter(c => c.id === "patty" || c.id === "protein" || c.id === "preparation" || c.id === "egg" || c.id === "meat");
     const toppingOpts = customizationOptions.filter(c => ["lettuce", "tomato", "onion", "pickle", "pickles", "cheese", "bacon", "jalapenos", "avocado", "mushrooms", "croutons", "tomatoes", "onions", "cucumbers", "olives", "egg", "beans_corn", "crunchy_topping", "nuts"].includes(c.id));
@@ -542,7 +573,7 @@ export function CustomizationPopup({ itemName, category, itemIncludes = [], onCo
     if (otherOpts.length > 0) groups.push({ title: "Other Options", options: otherOpts });
     
     return groups;
-  }, [customizationOptions]);
+  }, [customizationOptions, isSalad, category, itemName]);
 
   const totalSauceCost = selectedSauces.reduce((sum, s) => sum + (s.price * s.quantity), 0);
 
