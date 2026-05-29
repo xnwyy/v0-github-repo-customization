@@ -405,7 +405,15 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
                 <button
                   onClick={() => {
                     if (hasSizes) {
-                      handleSizeSelection(item, category.id);
+                      // Find the first order item matching this item and reduce its quantity
+                      const matchingKeys = Object.keys(orderItems).filter(key => 
+                        key.startsWith(`${category.id}:${item.name}:`)
+                      );
+                      if (matchingKeys.length > 0) {
+                        // Remove from the last added size variant
+                        const keyToUpdate = matchingKeys[matchingKeys.length - 1];
+                        updateQuantity(keyToUpdate, -1);
+                      }
                     } else {
                       const key = `${category.id}:${item.name}`;
                       updateQuantity(key, -1, item, category.id);
