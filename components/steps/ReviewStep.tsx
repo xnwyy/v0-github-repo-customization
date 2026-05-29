@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, MapPin, CreditCard, ShoppingBag, Hash } from "lucide-react";
-import { OrderItem, Condiment } from "@/types";
+import { MapPin, CreditCard, ShoppingBag, Hash } from "lucide-react";
+import { OrderItem, Condiment, SauceSelection } from "@/types";
 
 interface ReviewStepProps {
   orderName: string;
@@ -59,43 +59,7 @@ export function ReviewStep({
     setOrderNumber(generateOrderNumber());
   }, []);
 
-  const calculateEstimatedTime = (): string => {
-    const totalItems = Object.values(orderItems).reduce((sum, item) => sum + item.quantity, 0);
-    let baseTime: number;
-    
-    switch (pickupMethod) {
-      case 'delivery':
-        baseTime = 25;
-        break;
-      case 'dine-in':
-        baseTime = 8;
-        break;
-      default: // pickup
-        baseTime = 12;
-    }
-    
-    const estimatedMinutes = Math.min(baseTime + (totalItems * 2), 60);
-    
-    if (estimatedMinutes >= 60) {
-      const hours = Math.floor(estimatedMinutes / 60);
-      const minutes = estimatedMinutes % 60;
-      return `${hours} hour${hours > 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} min` : ''}`;
-    }
-    return `${estimatedMinutes} minutes`;
-  };
-
-  const getTimeLabel = (): string => {
-    switch (pickupMethod) {
-      case 'delivery':
-        return 'Estimated Delivery Time';
-      case 'dine-in':
-        return 'Estimated Wait Time';
-      default:
-        return 'Estimated Pickup Time';
-    }
-  };
-
-  const groupedItems: { name: string; size?: string; quantity: number; price: number; customizations?: Record<string, string>; customizationCosts?: { name: string; amount: number }[] }[] = [];
+  const groupedItems: { name: string; size?: string; quantity: number; price: number; customizations?: Record<string, string>; customizationCosts?: { name: string; amount: number }[]; sauces?: SauceSelection[] }[] = [];
   
   Object.values(orderItems).forEach(item => {
     if (item.quantity > 0) {
@@ -126,7 +90,8 @@ export function ReviewStep({
         quantity: item.quantity,
         price: item.price,
         customizations: item.customizations,
-        customizationCosts
+        customizationCosts,
+        sauces: item.sauces
       });
     }
   });
@@ -161,15 +126,6 @@ export function ReviewStep({
           <div>
             <div className="text-sm text-white/60">Order Name</div>
             <div className="text-lg font-bold text-white">{orderName}</div>
-          </div>
-        </div>
-
-        {/* Estimated Time */}
-        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-          <Clock className="text-green-400" size={24} />
-          <div>
-            <div className="text-sm text-white/60">{getTimeLabel()}</div>
-            <div className="text-lg font-bold text-white">{calculateEstimatedTime()}</div>
           </div>
         </div>
 
@@ -217,7 +173,7 @@ export function ReviewStep({
                 {item.customizations && Object.keys(item.customizations).length > 0 && (
                   <div className="text-sm text-white/60 mt-1 space-y-0.5">
                     {Object.entries(item.customizations)
-                      .filter(([, value]) => value !== 'regular' && value !== 'none' && !value.startsWith('none'))
+                      .filter(([, value]) => value !== 'regular' && value !== 'none' && value !== 'as included' && !value.startsWith('none'))
                       .map(([key, value]) => (
                         <div key={key} className="flex justify-between">
                           <span className="capitalize">{key}: {value.split('(')[0].trim()}</span>
@@ -228,6 +184,21 @@ export function ReviewStep({
                           )}
                         </div>
                       ))}
+                  </div>
+                )}
+                {item.sauces && item.sauces.length > 0 && (
+                  <div className="text-sm text-white/60 mt-1 space-y-0.5">
+                    <div className="text-orange-400 text-xs font-semibold">Added Sauces:</div>
+                    {item.sauces.map((sauce, sauceIdx) => (
+                      <div key={sauceIdx} className="flex justify-between">
+                        <span>{sauce.quantity}x {sauce.name} ({sauce.type})</span>
+                        {sauce.price > 0 && (
+                          <span className="text-red-400">
+                            +${(sauce.price * sauce.quantity).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

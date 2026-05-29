@@ -5,7 +5,7 @@ import { Search, X, Plus, Minus } from "lucide-react";
 import { menuCategories, itemHasSizes } from "@/data/menuData";
 import { CustomizationPopup } from "@/components/CustomizationPopup";
 import { SizeSelectionPopup } from "@/components/SizeSelectionPopup";
-import { OrderItem, MenuItem } from "@/types";
+import { OrderItem, MenuItem, SauceSelection } from "@/types";
 import { useToast } from "@/components/Toast";
 
 interface OrderItemsStepProps {
@@ -277,19 +277,24 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
     }
   };
 
-  const handleCustomizationConfirm = (customizations: Record<string, string>, specialNotes: string, quantity: number) => {
+  const handleCustomizationConfirm = (customizations: Record<string, string>, specialNotes: string, quantity: number, sauces?: SauceSelection[]) => {
     if (customizationPopup) {
       const newItems = { ...orderItems };
       
       // Create a unique key based on customizations
       const customKey = Object.entries(customizations)
-        .filter(([, v]) => v !== 'regular' && v !== 'none')
+        .filter(([, v]) => v !== 'regular' && v !== 'none' && v !== 'as included')
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([k, v]) => `${k}:${v}`)
         .join('|');
       
-      const uniqueKey = customKey 
-        ? `${customizationPopup.itemKey}:${customKey.slice(0, 50)}`
+      // Add sauce info to key if present
+      const sauceKey = sauces && sauces.length > 0 
+        ? sauces.map(s => `${s.name}:${s.type}:${s.quantity}`).join('|')
+        : '';
+      
+      const uniqueKey = customKey || sauceKey
+        ? `${customizationPopup.itemKey}:${(customKey + sauceKey).slice(0, 50)}`
         : customizationPopup.itemKey;
       
       // Calculate extra cost from customizations (both additions and subtractions)
@@ -310,6 +315,13 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
         if (value === 'extra' && key !== 'cheese' && !value.includes('$')) extraCost += 0.25;
       });
       
+      // Add sauce costs
+      if (sauces && sauces.length > 0) {
+        sauces.forEach(sauce => {
+          extraCost += sauce.price * sauce.quantity;
+        });
+      }
+      
       const basePrice = customizationPopup.baseItem.price + extraCost;
       
       if (newItems[uniqueKey]) {
@@ -323,7 +335,8 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
           quantity: quantity,
           category: customizationPopup.category,
           customizations,
-          specialNotes
+          specialNotes,
+          sauces
         };
       }
       
@@ -539,6 +552,7 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
         <CustomizationPopup
           itemName={customizationPopup.itemName}
           category={customizationPopup.category}
+          itemIncludes={customizationPopup.baseItem.includes}
           onConfirm={handleCustomizationConfirm}
           onClose={() => setCustomizationPopup(null)}
         />
