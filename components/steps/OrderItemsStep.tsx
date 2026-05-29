@@ -404,19 +404,14 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
               <>
                 <button
                   onClick={() => {
-                    if (hasSizes) {
-                      // Find the first order item matching this item and reduce its quantity
-                      const matchingKeys = Object.keys(orderItems).filter(key => 
-                        key.startsWith(`${category.id}:${item.name}:`)
-                      );
-                      if (matchingKeys.length > 0) {
-                        // Remove from the last added size variant
-                        const keyToUpdate = matchingKeys[matchingKeys.length - 1];
-                        updateQuantity(keyToUpdate, -1);
-                      }
-                    } else {
-                      const key = `${category.id}:${item.name}`;
-                      updateQuantity(key, -1, item, category.id);
+                    // Find matching keys - handles both sized items (with :size suffix) and customized items
+                    const matchingKeys = Object.keys(orderItems).filter(key => 
+                      key === `${category.id}:${item.name}` || key.startsWith(`${category.id}:${item.name}:`)
+                    );
+                    if (matchingKeys.length > 0) {
+                      // Remove from the last added variant
+                      const keyToUpdate = matchingKeys[matchingKeys.length - 1];
+                      updateQuantity(keyToUpdate, -1);
                     }
                   }}
                   className="w-8 h-8 rounded-full border border-pink-400 text-pink-400 flex items-center justify-center hover:bg-pink-400 hover:text-black transition-colors"

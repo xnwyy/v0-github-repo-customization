@@ -61,7 +61,9 @@ const fishCustomizations = [
 const nuggetsCustomizations = [
   { id: "dipping1", name: "Dipping Sauce 1", options: ["BBQ", "none (-$0.25)", "Sweet & Sour", "Honey Mustard", "Ranch", "Buffalo", "Spicy Buffalo", "Tangy BBQ", "Hot Mustard", "Creamy Ranch", "Sriracha Mac", "Chipotle BBQ"] },
   { id: "dipping2", name: "Dipping Sauce 2", options: ["none", "BBQ (+$0.35)", "Sweet & Sour (+$0.35)", "Honey Mustard (+$0.35)", "Ranch (+$0.35)", "Buffalo (+$0.35)", "Spicy Buffalo (+$0.35)", "Tangy BBQ (+$0.35)", "Hot Mustard (+$0.35)"] },
-  { id: "extra_sauce", name: "Extra Sauces", options: ["none", "+1 extra sauce (+$0.35)", "+2 extra sauces (+$0.70)", "+3 extra sauces (+$1.05)"] },
+  { id: "dipping3", name: "Dipping Sauce 3 (Extra)", options: ["none", "BBQ (+$0.35)", "Sweet & Sour (+$0.35)", "Honey Mustard (+$0.35)", "Ranch (+$0.35)", "Buffalo (+$0.35)", "Spicy Buffalo (+$0.35)", "Tangy BBQ (+$0.35)", "Hot Mustard (+$0.35)", "Creamy Ranch (+$0.35)", "Sriracha Mac (+$0.45)"] },
+  { id: "dipping4", name: "Dipping Sauce 4 (Extra)", options: ["none", "BBQ (+$0.35)", "Sweet & Sour (+$0.35)", "Honey Mustard (+$0.35)", "Ranch (+$0.35)", "Buffalo (+$0.35)", "Spicy Buffalo (+$0.35)", "Tangy BBQ (+$0.35)", "Hot Mustard (+$0.35)", "Creamy Ranch (+$0.35)", "Sriracha Mac (+$0.45)"] },
+  { id: "extra_sauce", name: "Even More Sauces?", options: ["none", "+1 extra sauce (+$0.35)", "+2 extra sauces (+$0.70)", "+3 extra sauces (+$1.05)", "+4 extra sauces (+$1.40)", "+5 extra sauces (+$1.75)"] },
 ];
 
 // Breakfast customizations
@@ -279,7 +281,7 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
     const breadOpts = customizationOptions.filter(c => c.id === "bread" || c.id === "tortilla");
     const proteinOpts = customizationOptions.filter(c => c.id === "patty" || c.id === "protein" || c.id === "preparation" || c.id === "egg" || c.id === "meat");
     const toppingOpts = customizationOptions.filter(c => ["lettuce", "tomato", "onion", "pickle", "pickles", "cheese", "bacon", "jalapenos", "avocado", "mushrooms", "croutons", "tomatoes", "onions"].includes(c.id));
-    const sauceOpts = customizationOptions.filter(c => ["sauce", "ketchup", "mustard", "mayo", "tartar", "dressing", "dipping1", "dipping2", "extra_sauce", "fudge", "caramel", "drizzle"].includes(c.id));
+    const sauceOpts = customizationOptions.filter(c => ["sauce", "ketchup", "mustard", "mayo", "tartar", "dressing", "dipping1", "dipping2", "dipping3", "dipping4", "extra_sauce", "fudge", "caramel", "drizzle"].includes(c.id));
     const drinkOpts = customizationOptions.filter(c => ["ice", "milk", "sweetener", "shots", "flavor", "whip", "drinkType", "drinkSize", "drink", "straw", "lid"].includes(c.id));
     const sidesOpts = customizationOptions.filter(c => ["side", "friesSize", "friesSalt", "friesCooking", "salt", "cooking", "seasoning"].includes(c.id));
     const otherOpts = customizationOptions.filter(c => ["butter", "toy", "toppings", "nuts", "cherry"].includes(c.id));
