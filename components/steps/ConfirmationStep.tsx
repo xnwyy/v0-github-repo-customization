@@ -9,42 +9,36 @@ interface ConfirmationStepProps {
   pickupMethod: string;
 }
 
-function calculateWaitTime(orderItems: Record<string, OrderItem>, pickupMethod: string): number {
+function calculateWaitTime(orderItems: Record<string, OrderItem>, pickupMethod: string, ordersInQueue: number): number {
+  // Base time per order in queue: 4-6 minutes
+  const perOrderTime = ordersInQueue * (Math.random() * 2 + 4);
+  
+  // Small complexity bonus based on YOUR order size
   const totalItems = Object.values(orderItems).reduce((sum, item) => sum + item.quantity, 0);
-  
-  // Base time: 3-5 minutes
-  const baseTime = Math.floor(Math.random() * 3) + 3;
-  
-  // Per item time: 1-2 minutes per item with randomization
-  const perItemTime = totalItems * (Math.random() * 1.5 + 0.5);
-  
-  // Complexity bonus: some items take longer (burgers, combos, etc.)
   let complexityBonus = 0;
+  
   Object.values(orderItems).forEach((item) => {
     const name = item.name.toLowerCase();
     if (name.includes("combo") || name.includes("meal")) {
-      complexityBonus += item.quantity * (Math.random() * 2 + 1);
+      complexityBonus += item.quantity * 0.5;
     }
     if (name.includes("burger") || name.includes("quarter pounder") || name.includes("big mac")) {
-      complexityBonus += item.quantity * (Math.random() * 1.5 + 0.5);
+      complexityBonus += item.quantity * 0.3;
     }
     if (name.includes("happy meal")) {
-      complexityBonus += item.quantity * (Math.random() * 2 + 1.5);
-    }
-    if (name.includes("mcflurry") || name.includes("frappe") || name.includes("milkshake")) {
-      complexityBonus += item.quantity * (Math.random() * 1 + 0.5);
+      complexityBonus += item.quantity * 0.5;
     }
   });
   
-  // Delivery adds extra time
-  const deliveryBonus = pickupMethod === "delivery" ? Math.floor(Math.random() * 15) + 10 : 0;
+  // Delivery adds significant extra time regardless of items (15-25 mins extra)
+  const deliveryBonus = pickupMethod === "delivery" ? Math.floor(Math.random() * 11) + 15 : 0;
   
-  // Random rush hour factor (sometimes kitchen is busy)
-  const rushFactor = Math.random() > 0.7 ? Math.floor(Math.random() * 5) + 3 : 0;
+  // Base prep time for your order: 3-5 minutes minimum
+  const basePrepTime = Math.floor(Math.random() * 3) + 3 + (totalItems * 0.5);
   
-  const totalTime = Math.ceil(baseTime + perItemTime + complexityBonus + deliveryBonus + rushFactor);
+  const totalTime = Math.ceil(perOrderTime + complexityBonus + deliveryBonus + basePrepTime);
   
-  return totalTime;
+  return Math.max(totalTime, 5); // Minimum 5 minutes
 }
 
 function formatTime(minutes: number): string {
@@ -61,13 +55,25 @@ function formatTime(minutes: number): string {
 
 export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: ConfirmationStepProps) {
   const [waitTime, setWaitTime] = useState<number | null>(null);
+  const [ordersAhead, setOrdersAhead] = useState<number>(0);
+  const [placeInLine, setPlaceInLine] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(true);
 
   useEffect(() => {
     // Simulate calculation delay for effect
     const timer = setTimeout(() => {
-      const time = calculateWaitTime(orderItems, pickupMethod);
+      // Completely random number of orders ahead: 1-12
+      const randomOrdersAhead = Math.floor(Math.random() * 12) + 1;
+      setOrdersAhead(randomOrdersAhead);
+      
+      const time = calculateWaitTime(orderItems, pickupMethod, randomOrdersAhead);
       setWaitTime(time);
+      
+      // For dine-in, generate a random place in line number (1-99)
+      if (pickupMethod === "dine-in") {
+        setPlaceInLine(Math.floor(Math.random() * 99) + 1);
+      }
+      
       setIsCalculating(false);
     }, 1500);
 
@@ -76,6 +82,8 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
 
   const totalItems = Object.values(orderItems).reduce((sum, item) => sum + item.quantity, 0);
   const isDelivery = pickupMethod === "delivery";
+  const isDineIn = pickupMethod === "dine-in";
+  const isPickup = pickupMethod === "pickup";
 
   return (
     <section className="max-w-md mx-auto text-center animate-fadeIn">
@@ -83,8 +91,28 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
       <h3 className="text-3xl font-bold text-green-400 mb-4">Order Submitted Successfully!</h3>
       
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6 border border-white/20">
+        {/* Place in line for dine-in */}
+        {isDineIn && placeInLine && !isCalculating && (
+          <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-4 mb-4">
+            <div className="text-yellow-400/70 text-sm mb-1">Your Order Number</div>
+            <div className="text-yellow-400 font-bold text-4xl">
+              #{placeInLine}
+            </div>
+            <div className="text-yellow-400/70 text-xs mt-2">
+              Listen for your number to be called
+            </div>
+          </div>
+        )}
+
+        {/* Orders ahead - only for dine-in and pickup, NOT delivery */}
+        {(isDineIn || isPickup) && !isCalculating && (
+          <div className="text-white/70 mb-3 text-sm">
+            Orders ahead of you: <span className="text-pink-400 font-semibold">{ordersAhead}</span>
+          </div>
+        )}
+        
         <div className="text-white/70 mb-2">
-          {isDelivery ? "Estimated Delivery Time" : "Estimated Wait Time"}
+          {isDelivery ? "Estimated Delivery Time" : isDineIn ? "Estimated Wait Time" : "Estimated Pickup Time"}
         </div>
         
         {isCalculating ? (
@@ -97,8 +125,18 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
             <div className="text-4xl font-bold text-pink-400 mb-2">
               {formatTime(waitTime!)}
             </div>
-            <div className="text-white/50 text-sm">
-              Based on {totalItems} item{totalItems !== 1 ? 's' : ''} in your order
+            {(isDineIn || isPickup) && (
+              <div className="text-white/50 text-sm">
+                Based on {ordersAhead} order{ordersAhead !== 1 ? 's' : ''} ahead
+              </div>
+            )}
+            {isDelivery && (
+              <div className="text-white/50 text-sm">
+                Includes travel time to your location
+              </div>
+            )}
+            <div className="text-white/40 text-xs mt-1">
+              Your order has {totalItems} item{totalItems !== 1 ? 's' : ''}
             </div>
           </>
         )}
@@ -108,8 +146,16 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
         <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-4 mb-6">
           <div className="text-yellow-400 text-sm">
             {waitTime > 45 
-              ? "🔥 Large order detected! Our team is working hard on your order."
-              : "⏰ Your order is a bit larger than usual. Thanks for your patience!"}
+              ? "We're a bit busy right now! Thanks for your patience."
+              : "There are several orders ahead of you. Thanks for waiting!"}
+          </div>
+        </div>
+      )}
+
+      {isDelivery && (
+        <div className="bg-blue-500/20 border border-blue-500/40 rounded-lg p-4 mb-6">
+          <div className="text-blue-400 text-sm">
+            Your driver will text you when they&apos;re on the way
           </div>
         </div>
       )}
@@ -117,7 +163,9 @@ export function ConfirmationStep({ onNewOrder, orderItems, pickupMethod }: Confi
       <p className="text-white/70 mb-8">
         {isDelivery 
           ? "Your order is being prepared and will be delivered to your address soon."
-          : "Please proceed to the counter when your order number is called."}
+          : isDineIn
+          ? "Please wait for your number to be called at the counter."
+          : "Please proceed to the counter when your order is ready."}
       </p>
 
       <button

@@ -7,6 +7,14 @@ export interface MenuItem {
   needsCustomization?: boolean;
 }
 
+export interface SauceSelection {
+  name: string;
+  type: 'regular' | 'extra';
+  quantity: number;
+  price: number;
+  calories: number;
+}
+
 export interface OrderItem {
   name: string;
   price: number;
@@ -20,6 +28,7 @@ export interface OrderItem {
   specialNotes?: string;
   happyMealCustomizations?: Record<string, string>;
   burgerCustomizations?: Record<string, string>;
+  sauces?: SauceSelection[];
 }
 
 export interface Condiment {
