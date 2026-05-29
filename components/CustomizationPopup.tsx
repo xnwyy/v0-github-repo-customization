@@ -35,22 +35,39 @@ const burgerCustomizations = [
 ];
 
 // Sauce options built from condiments data (for multi-select)
-const sauceOptions = condimentsData
-  .filter(c => 
-    c.name.toLowerCase().includes('sauce') || 
-    c.name.toLowerCase().includes('ketchup') || 
-    c.name.toLowerCase().includes('mustard') || 
-    c.name.toLowerCase().includes('mayo') || 
-    c.name.toLowerCase().includes('ranch') || 
-    c.name.toLowerCase().includes('aioli') || 
-    c.name.toLowerCase().includes('sriracha') ||
-    c.name.toLowerCase().includes('buffalo') ||
-    c.name.toLowerCase().includes('honey') ||
-    c.name.toLowerCase().includes('chipotle') ||
-    c.name.toLowerCase().includes('tartar') ||
-    c.name.toLowerCase().includes('salsa')
-  )
+const sauceOptions: string[] = condimentsData
+  .filter(c => {
+    const name = c.name.toLowerCase();
+    return (
+      name.includes('sauce') || 
+      name.includes('ketchup') || 
+      name.includes('mustard') || 
+      name.includes('mayo') || 
+      name.includes('ranch') || 
+      name.includes('aioli') || 
+      name.includes('sriracha') ||
+      name.includes('buffalo') ||
+      name.includes('honey') ||
+      name.includes('chipotle') ||
+      name.includes('tartar') ||
+      name.includes('salsa')
+    );
+  })
   .map(c => c.name);
+
+// Fallback if sauceOptions is empty
+const finalSauceOptions = sauceOptions.length > 0 ? sauceOptions : [
+  "Ketchup",
+  "Mustard", 
+  "Mayo",
+  "BBQ Sauce",
+  "Ranch",
+  "Honey Mustard",
+  "Buffalo Sauce",
+  "Hot Sauce",
+  "Chipotle Sauce",
+  "Sriracha"
+];
 
 // Chicken sandwich customizations
 const chickenCustomizations = [
@@ -418,7 +435,7 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
               <h4 className="text-pink-400 font-semibold text-sm mb-3 uppercase tracking-wide">Extra Sauces (Select Multiple)</h4>
               <p className="text-white/50 text-xs mb-3">Tap any sauce to add it on the side</p>
               <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto relative">
-                {sauceOptions.map((sauce) => {
+                {finalSauceOptions.map((sauce) => {
                   const isSelected = selectedSauces[sauce];
                   return (
                     <button
