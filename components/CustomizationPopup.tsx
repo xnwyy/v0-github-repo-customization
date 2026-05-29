@@ -295,7 +295,8 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
     });
     return initial;
   });
-  const [selectedSauces, setSelectedSauces] = useState<string[]>([]);
+  const [selectedSauces, setSelectedSauces] = useState<Record<string, 'regular' | 'extra'>>({});
+  const [saucePopup, setSaucePopup] = useState<string | null>(null);
   const [specialNotes, setSpecialNotes] = useState("");
   const [quantity, setQuantity] = useState(1);
 
@@ -306,24 +307,49 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
     }));
   };
 
-  const toggleSauce = (sauce: string) => {
+  const handleSauceClick = (sauce: string) => {
+    if (selectedSauces[sauce]) {
+      // If already selected, show popup to change or remove
+      setSaucePopup(sauce);
+    } else {
+      // If not selected, show popup to choose amount
+      setSaucePopup(sauce);
+    }
+  };
+
+  const selectSauceAmount = (sauce: string, amount: 'regular' | 'extra') => {
+    setSelectedSauces(prev => ({
+      ...prev,
+      [sauce]: amount
+    }));
+    setSaucePopup(null);
+  };
+
+  const removeSauce = (sauce: string) => {
     setSelectedSauces(prev => {
-      if (prev.includes(sauce)) {
-        return prev.filter(s => s !== sauce);
-      } else {
-        return [...prev, sauce];
-      }
+      const newSauces = { ...prev };
+      delete newSauces[sauce];
+      return newSauces;
     });
+    setSaucePopup(null);
   };
 
   const handleConfirm = () => {
     // Merge selected sauces into customizations
     const finalCustomizations = { ...customizations };
-    if (selectedSauces.length > 0) {
-      finalCustomizations.extraSauces = selectedSauces.join(", ");
+    const sauceEntries = Object.entries(selectedSauces);
+    if (sauceEntries.length > 0) {
+      finalCustomizations.extraSauces = sauceEntries
+        .map(([sauce, amount]) => `${sauce} (${amount})`)
+        .join(", ");
     }
     onConfirm(finalCustomizations, specialNotes, quantity);
   };
+
+  // Calculate total sauce cost
+  const sauceTotalCost = Object.entries(selectedSauces).reduce((total, [, amount]) => {
+    return total + (amount === 'regular' ? 0.25 : 0.50);
+  }, 0);
 
   // Group customizations by type for better UX
   const groupedOptions = useMemo(() => {
@@ -390,25 +416,88 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
           {showSaucesSection && (
             <div>
               <h4 className="text-pink-400 font-semibold text-sm mb-3 uppercase tracking-wide">Extra Sauces (Select Multiple)</h4>
-              <p className="text-white/50 text-xs mb-3">Select any additional sauces you&apos;d like on the side</p>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                {sauceOptions.map((sauce) => (
-                  <button
-                    key={sauce}
-                    onClick={() => toggleSauce(sauce)}
-                    className={`px-3 py-2 rounded-lg text-sm text-left transition-all ${
-                      selectedSauces.includes(sauce)
-                        ? "bg-pink-500 text-black font-medium"
-                        : "bg-white/10 text-white/80 hover:bg-white/20"
-                    }`}
-                  >
-                    {sauce}
-                  </button>
-                ))}
+              <p className="text-white/50 text-xs mb-3">Tap any sauce to add it on the side</p>
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto relative">
+                {sauceOptions.map((sauce) => {
+                  const isSelected = selectedSauces[sauce];
+                  return (
+                    <button
+                      key={sauce}
+                      onClick={() => handleSauceClick(sauce)}
+                      className={`px-3 py-2 rounded-lg text-sm text-left transition-all relative ${
+                        isSelected
+                          ? "bg-pink-500 text-black font-medium"
+                          : "bg-white/10 text-white/80 hover:bg-white/20"
+                      }`}
+                    >
+                      <span className="block truncate pr-1">{sauce}</span>
+                      {isSelected && (
+                        <span className="text-xs opacity-80 block">
+                          {isSelected === 'regular' ? '+$0.25' : '+$0.50'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-              {selectedSauces.length > 0 && (
-                <div className="mt-3 text-sm text-pink-400">
-                  Selected: {selectedSauces.length} sauce{selectedSauces.length !== 1 ? 's' : ''}
+              {Object.keys(selectedSauces).length > 0 && (
+                <div className="mt-3 text-sm text-pink-400 flex justify-between items-center">
+                  <span>Selected: {Object.keys(selectedSauces).length} sauce{Object.keys(selectedSauces).length !== 1 ? 's' : ''}</span>
+                  <span className="font-medium">+${sauceTotalCost.toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* Sauce Amount Popup */}
+              {saucePopup && (
+                <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={() => setSaucePopup(null)}>
+                  <div 
+                    className="bg-gray-900 rounded-xl p-5 w-full max-w-xs border border-white/20 shadow-xl animate-fadeIn"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h4 className="text-white font-bold text-lg mb-1">{saucePopup}</h4>
+                    <p className="text-white/60 text-sm mb-4">Select amount</p>
+                    
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => selectSauceAmount(saucePopup, 'regular')}
+                        className={`w-full py-3 px-4 rounded-lg text-left flex justify-between items-center transition-all ${
+                          selectedSauces[saucePopup] === 'regular'
+                            ? 'bg-pink-500 text-black font-medium'
+                            : 'bg-white/10 text-white hover:bg-white/20'
+                        }`}
+                      >
+                        <span>Regular</span>
+                        <span className="text-sm opacity-80">+$0.25</span>
+                      </button>
+                      <button
+                        onClick={() => selectSauceAmount(saucePopup, 'extra')}
+                        className={`w-full py-3 px-4 rounded-lg text-left flex justify-between items-center transition-all ${
+                          selectedSauces[saucePopup] === 'extra'
+                            ? 'bg-pink-500 text-black font-medium'
+                            : 'bg-white/10 text-white hover:bg-white/20'
+                        }`}
+                      >
+                        <span>Extra</span>
+                        <span className="text-sm opacity-80">+$0.50</span>
+                      </button>
+                      
+                      {selectedSauces[saucePopup] && (
+                        <button
+                          onClick={() => removeSauce(saucePopup)}
+                          className="w-full py-3 px-4 rounded-lg text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all mt-2"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={() => setSaucePopup(null)}
+                      className="w-full py-2 mt-4 text-white/60 hover:text-white text-sm transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
