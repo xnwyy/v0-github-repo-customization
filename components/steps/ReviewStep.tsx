@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, MapPin, CreditCard, ShoppingBag, Hash } from "lucide-react";
+import { MapPin, CreditCard, ShoppingBag, Hash } from "lucide-react";
 import { OrderItem, Condiment } from "@/types";
 
 interface ReviewStepProps {
