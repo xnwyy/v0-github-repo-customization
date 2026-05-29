@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, MapPin, CreditCard, ShoppingBag, Hash } from "lucide-react";
+import { MapPin, CreditCard, ShoppingBag, Hash } from "lucide-react";
 import { OrderItem, Condiment } from "@/types";
 
 interface ReviewStepProps {
@@ -16,27 +16,6 @@ interface ReviewStepProps {
   healthcareDonation: number;
   onNext: () => void;
   onBack: () => void;
-}
-
-function generateOrderNumber(): string {
-  // Generate a random order number with letters and numbers
-  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const numbers = '0123456789';
-  
-  let orderNum = '';
-  
-  // Format: XX-NNNN-XX (like AB-1234-CD)
-  orderNum += letters[Math.floor(Math.random() * letters.length)];
-  orderNum += letters[Math.floor(Math.random() * letters.length)];
-  orderNum += '-';
-  for (let i = 0; i < 4; i++) {
-    orderNum += numbers[Math.floor(Math.random() * numbers.length)];
-  }
-  orderNum += '-';
-  orderNum += letters[Math.floor(Math.random() * letters.length)];
-  orderNum += letters[Math.floor(Math.random() * letters.length)];
-  
-  return orderNum;
 }
 
 export function ReviewStep({
@@ -56,44 +35,20 @@ export function ReviewStep({
   
   useEffect(() => {
     // Generate order number once on mount
-    setOrderNumber(generateOrderNumber());
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    let orderNum = '';
+    orderNum += letters[Math.floor(Math.random() * letters.length)];
+    orderNum += letters[Math.floor(Math.random() * letters.length)];
+    orderNum += '-';
+    for (let i = 0; i < 4; i++) {
+      orderNum += numbers[Math.floor(Math.random() * numbers.length)];
+    }
+    orderNum += '-';
+    orderNum += letters[Math.floor(Math.random() * letters.length)];
+    orderNum += letters[Math.floor(Math.random() * letters.length)];
+    setOrderNumber(orderNum);
   }, []);
-
-  const calculateEstimatedTime = (): string => {
-    const totalItems = Object.values(orderItems).reduce((sum, item) => sum + item.quantity, 0);
-    let baseTime: number;
-    
-    switch (pickupMethod) {
-      case 'delivery':
-        baseTime = 25;
-        break;
-      case 'dine-in':
-        baseTime = 8;
-        break;
-      default: // pickup
-        baseTime = 12;
-    }
-    
-    const estimatedMinutes = Math.min(baseTime + (totalItems * 2), 60);
-    
-    if (estimatedMinutes >= 60) {
-      const hours = Math.floor(estimatedMinutes / 60);
-      const minutes = estimatedMinutes % 60;
-      return `${hours} hour${hours > 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} min` : ''}`;
-    }
-    return `${estimatedMinutes} minutes`;
-  };
-
-  const getTimeLabel = (): string => {
-    switch (pickupMethod) {
-      case 'delivery':
-        return 'Estimated Delivery Time';
-      case 'dine-in':
-        return 'Estimated Wait Time';
-      default:
-        return 'Estimated Pickup Time';
-    }
-  };
 
   const groupedItems: { name: string; size?: string; quantity: number; price: number; customizations?: Record<string, string>; customizationCosts?: { name: string; amount: number }[] }[] = [];
   
@@ -161,15 +116,6 @@ export function ReviewStep({
           <div>
             <div className="text-sm text-white/60">Order Name</div>
             <div className="text-lg font-bold text-white">{orderName}</div>
-          </div>
-        </div>
-
-        {/* Estimated Time */}
-        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-          <Clock className="text-green-400" size={24} />
-          <div>
-            <div className="text-sm text-white/60">{getTimeLabel()}</div>
-            <div className="text-lg font-bold text-white">{calculateEstimatedTime()}</div>
           </div>
         </div>
 
