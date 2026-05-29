@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { users } from "@/data/menuData";
 import { User } from "@/types";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
 }
+
+// Memoized background component to prevent re-renders
+const BackgroundImage = memo(function BackgroundImage() {
+  return (
+    <>
+      {/* Optimized Background - removed backdrop-blur for performance */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "url('https://www.pixelstalk.net/wp-content/uploads/2016/08/Beautiful-Cute-Kitten-Desktop-Wallpapers.jpg')",
+        }}
+      />
+      <div className="absolute inset-0 bg-black/40" />
+    </>
+  );
+});
 
 export function LoginPage({ onLogin }: LoginPageProps) {
   const [username, setUsername] = useState("");
@@ -15,7 +32,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -31,6 +48,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
     setIsLoading(true);
 
+    // Reduced timeout for snappier feel
     setTimeout(() => {
       const user = users[username.toLowerCase() as keyof typeof users];
       if (!user) {
@@ -42,34 +60,34 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       setIsSuccess(true);
       setTimeout(() => {
         onLogin(user);
-      }, 500);
-    }, 1500);
-  };
+      }, 400);
+    }, 800);
+  }, [username, password, onLogin]);
+
+  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+  }, []);
+
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Default Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
-        style={{
-          backgroundImage:
-            "url('https://www.pixelstalk.net/wp-content/uploads/2016/08/Beautiful-Cute-Kitten-Desktop-Wallpapers.jpg')",
-        }}
-      />
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <BackgroundImage />
 
-      {/* Login Container */}
+      {/* Login Container - simplified transitions for performance */}
       <div
         className={`
-          relative z-10 bg-black/60 backdrop-blur-lg rounded-xl p-10 w-full max-w-md mx-4 shadow-2xl
-          transition-all duration-500 transform
-          ${isLoading && !isSuccess ? "scale-95 opacity-80" : "scale-100 opacity-100"}
-          ${isSuccess ? "scale-105 opacity-0" : ""}
+          relative z-10 bg-black/70 rounded-xl p-10 w-full max-w-md mx-4 shadow-2xl
+          transition-transform duration-300
+          ${isLoading && !isSuccess ? "scale-95" : "scale-100"}
+          ${isSuccess ? "scale-105 opacity-0" : "opacity-100"}
           animate-slideUp
         `}
       >
         <h1 className="text-2xl font-bold text-white text-center mb-6">
-          Login to MCD2025 🍔
+          Login to MCD2025
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,9 +96,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               type="text"
               placeholder="Username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={handleUsernameChange}
               disabled={isLoading}
-              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-colors disabled:opacity-50"
             />
           </div>
 
@@ -89,9 +107,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               type="password"
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               disabled={isLoading}
-              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-colors disabled:opacity-50"
             />
           </div>
 

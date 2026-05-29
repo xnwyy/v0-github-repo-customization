@@ -20,6 +20,7 @@ export interface OrderItem {
   specialNotes?: string;
   happyMealCustomizations?: Record<string, string>;
   burgerCustomizations?: Record<string, string>;
+  extraSauces?: Record<string, { amount: "regular" | "extra"; price: number }>;
 }
 
 export interface Condiment {

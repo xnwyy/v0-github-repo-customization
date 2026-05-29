@@ -171,13 +171,15 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
     return item.needsCustomization || 
            category === "Happy Meals" ||
            category === "happymeals" ||
-           category.toLowerCase().includes("burger") ||
+           category === "burgers" ||
            category === "chicken-sandwiches" ||
-           (category === "burgers" && 
-            (item.name.toLowerCase().includes("burger") || 
-             item.name.toLowerCase().includes("sandwich") ||
-             item.name.toLowerCase().includes("mac") ||
-             item.name.toLowerCase().includes("quarter")));
+           category.toLowerCase().includes("burger") ||
+           (item.name.toLowerCase().includes("burger") || 
+            item.name.toLowerCase().includes("sandwich") ||
+            item.name.toLowerCase().includes("mac") ||
+            item.name.toLowerCase().includes("quarter") ||
+            item.name.toLowerCase().includes("mcchicken") ||
+            item.name.toLowerCase().includes("filet-o-fish"));
   };
 
   const updateQuantity = (key: string, change: number, item?: MenuItem, category?: string) => {
@@ -277,7 +279,7 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
     }
   };
 
-  const handleCustomizationConfirm = (customizations: Record<string, string>, specialNotes: string, quantity: number) => {
+  const handleCustomizationConfirm = (customizations: Record<string, string>, specialNotes: string, quantity: number, extraSauces?: Record<string, { amount: "regular" | "extra"; price: number }>) => {
     if (customizationPopup) {
       const newItems = { ...orderItems };
       
@@ -288,8 +290,13 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
         .map(([k, v]) => `${k}:${v}`)
         .join('|');
       
-      const uniqueKey = customKey 
-        ? `${customizationPopup.itemKey}:${customKey.slice(0, 50)}`
+      // Include extra sauces in the key
+      const saucesKey = extraSauces 
+        ? Object.entries(extraSauces).map(([id, { amount }]) => `${id}:${amount}`).sort().join('|')
+        : '';
+      
+      const uniqueKey = customKey || saucesKey
+        ? `${customizationPopup.itemKey}:${(customKey + saucesKey).slice(0, 50)}`
         : customizationPopup.itemKey;
       
       // Calculate extra cost from customizations (both additions and subtractions)
@@ -310,6 +317,13 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
         if (value === 'extra' && key !== 'cheese' && !value.includes('$')) extraCost += 0.25;
       });
       
+      // Add extra sauces cost
+      if (extraSauces) {
+        Object.values(extraSauces).forEach(({ price }) => {
+          extraCost += price;
+        });
+      }
+      
       const basePrice = customizationPopup.baseItem.price + extraCost;
       
       if (newItems[uniqueKey]) {
@@ -323,7 +337,8 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
           quantity: quantity,
           category: customizationPopup.category,
           customizations,
-          specialNotes
+          specialNotes,
+          extraSauces
         };
       }
       

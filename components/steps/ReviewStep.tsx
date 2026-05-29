@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Clock, MapPin, CreditCard, ShoppingBag, Hash } from "lucide-react";
 import { OrderItem, Condiment } from "@/types";
+import { condimentsData } from "@/data/menuData";
 
 interface ReviewStepProps {
   orderName: string;
@@ -95,7 +96,7 @@ export function ReviewStep({
     }
   };
 
-  const groupedItems: { name: string; size?: string; quantity: number; price: number; customizations?: Record<string, string>; customizationCosts?: { name: string; amount: number }[] }[] = [];
+  const groupedItems: { name: string; size?: string; quantity: number; price: number; customizations?: Record<string, string>; customizationCosts?: { name: string; amount: number }[]; extraSauces?: Record<string, { amount: "regular" | "extra"; price: number }> }[] = [];
   
   Object.values(orderItems).forEach(item => {
     if (item.quantity > 0) {
@@ -126,7 +127,8 @@ export function ReviewStep({
         quantity: item.quantity,
         price: item.price,
         customizations: item.customizations,
-        customizationCosts
+        customizationCosts,
+        extraSauces: item.extraSauces
       });
     }
   });
@@ -228,6 +230,20 @@ export function ReviewStep({
                           )}
                         </div>
                       ))}
+                  </div>
+                )}
+                {item.extraSauces && Object.keys(item.extraSauces).length > 0 && (
+                  <div className="text-sm text-white/60 mt-1 space-y-0.5">
+                    <div className="text-pink-400 font-medium">Extra Sauces:</div>
+                    {Object.entries(item.extraSauces).map(([sauceId, { amount, price }]) => {
+                      const sauce = condimentsData.find(c => c.id === sauceId);
+                      return (
+                        <div key={sauceId} className="flex justify-between pl-2">
+                          <span>{sauce?.name || sauceId} ({amount})</span>
+                          <span className="text-red-400">+${price.toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
