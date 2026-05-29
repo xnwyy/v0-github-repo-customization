@@ -11,6 +11,7 @@ interface SizeSelectionPopupProps {
   category: string;
   onConfirm: (selections: { size: string; price: number; calories: number; quantity: number; iceOption?: string }[]) => void;
   onClose: () => void;
+  existingQuantities?: Record<string, number>; // key is size, value is current quantity
 }
 
 // Ice options with price adjustments
@@ -24,11 +25,12 @@ const iceOptions = [
 // Categories that should show ice options
 const drinkCategories = ["drinks", "mccafe", "tea", "icee", "smoothies"];
 
-export function SizeSelectionPopup({ item, category, onConfirm, onClose }: SizeSelectionPopupProps) {
+export function SizeSelectionPopup({ item, category, onConfirm, onClose, existingQuantities }: SizeSelectionPopupProps) {
   const [selections, setSelections] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
     item.sizes?.forEach((s) => {
-      initial[s.size] = 0;
+      // Pre-fill with existing quantities if available
+      initial[s.size] = existingQuantities?.[s.size] || 0;
     });
     return initial;
   });
@@ -63,19 +65,20 @@ export function SizeSelectionPopup({ item, category, onConfirm, onClose }: SizeS
 
   const handleConfirm = () => {
     const iceAdjust = isDrink ? getIcePriceAdjust() : 0;
-    const result = item.sizes
-      ?.filter((s) => selections[s.size] > 0)
-      .map((s) => ({
-        size: s.size,
-        price: Math.max(0, s.price + iceAdjust), // Apply ice discount
-        calories: s.calories,
-        quantity: selections[s.size],
-        iceOption: isDrink ? iceOption : undefined,
-      }));
+    // Include ALL sizes so we can handle removals (quantity = 0)
+    const result = item.sizes?.map((s) => ({
+      size: s.size,
+      price: Math.max(0, s.price + iceAdjust), // Apply ice discount
+      calories: s.calories,
+      quantity: selections[s.size] || 0,
+      iceOption: isDrink ? iceOption : undefined,
+    }));
     onConfirm(result || []);
   };
 
   const hasSelections = Object.values(selections).some((q) => q > 0);
+  const hasExistingItems = existingQuantities && Object.values(existingQuantities).some(q => q > 0);
+  const hasChanges = hasSelections || hasExistingItems;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -170,10 +173,10 @@ export function SizeSelectionPopup({ item, category, onConfirm, onClose }: SizeS
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!hasSelections}
+            disabled={!hasChanges}
             className="flex-1 py-3 bg-pink-500 hover:bg-pink-400 text-black rounded-lg transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add to Order
+            {hasExistingItems ? 'Update Order' : 'Add to Order'}
           </button>
         </div>
       </div>

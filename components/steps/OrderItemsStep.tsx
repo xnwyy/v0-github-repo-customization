@@ -226,14 +226,38 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
     
     const newItems = { ...orderItems };
     
+    // First, get all existing keys for this item to track what needs updating
+    const existingKeys = Object.keys(newItems).filter(key => 
+      key.startsWith(`${category}:${item.name}:`)
+    );
+    
+    // Track which sizes were handled
+    const handledSizes = new Set<string>();
+    
     selections.forEach(selection => {
       // Include ice option in key if present
       const iceKey = selection.iceOption && selection.iceOption !== 'regular' ? `:${selection.iceOption}` : '';
       const key = `${category}:${item.name}:${selection.size}${iceKey}`;
       
-      if (newItems[key]) {
-        newItems[key].quantity += selection.quantity;
-      } else {
+      handledSizes.add(selection.size);
+      
+      if (selection.quantity === 0) {
+        // Remove item if quantity is 0
+        if (newItems[key]) {
+          delete newItems[key];
+          showToast(`${item.name} (${selection.size}) removed from order`, 'error');
+        }
+      } else if (newItems[key]) {
+        // Update existing item - set quantity directly, not add
+        const oldQty = newItems[key].quantity;
+        newItems[key].quantity = selection.quantity;
+        if (selection.quantity > oldQty) {
+          showToast(`${item.name} (${selection.size}) quantity: ${selection.quantity}`, 'success');
+        } else if (selection.quantity < oldQty) {
+          showToast(`${item.name} (${selection.size}) quantity: ${selection.quantity}`, 'info');
+        }
+      } else if (selection.quantity > 0) {
+        // Add new item
         newItems[key] = {
           name: item.name,
           price: selection.price,
@@ -246,17 +270,19 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
             ? { ice: selection.iceOption === 'no-ice' ? 'no ice (-$0.20)' : selection.iceOption === 'light' ? 'light ice (-$0.10)' : 'extra ice' }
             : undefined
         };
-      }
-    });
-    
-    setOrderItems(newItems);
-    
-    selections.forEach(selection => {
-      if (selection.quantity > 0) {
         showToast(`${item.name} (${selection.size}) x${selection.quantity} added to order`, 'success');
       }
     });
     
+    // Handle sizes that weren't in selections but exist in order (set to 0)
+    existingKeys.forEach(key => {
+      const size = newItems[key]?.size || key.split(':')[2];
+      if (!handledSizes.has(size) && newItems[key]?.quantity > 0) {
+        // This size wasn't included in selections, keep it as is
+      }
+    });
+    
+    setOrderItems(newItems);
     setSizePopupItem(null);
   };
 
@@ -565,6 +591,15 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
           category={sizePopupItem.category}
           onConfirm={handleSizeConfirm}
           onClose={() => setSizePopupItem(null)}
+          existingQuantities={
+            Object.entries(orderItems)
+              .filter(([key]) => key.startsWith(`${sizePopupItem.category}:${sizePopupItem.item.name}:`))
+              .reduce((acc, [key, item]) => {
+                const size = item.size || key.split(':')[2];
+                acc[size] = item.quantity;
+                return acc;
+              }, {} as Record<string, number>)
+          }
         />
       )}
     </div>
