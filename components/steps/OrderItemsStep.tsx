@@ -405,10 +405,48 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
                 <button
                   onClick={() => {
                     if (hasSizes) {
-                      handleSizeSelection(item, category.id);
+                      // For sized items, find the first key with quantity > 0 and reduce it
+                      const sizedKeys = Object.entries(orderItems)
+                        .filter(([key]) => key.startsWith(`${category.id}:${item.name}:`))
+                        .filter(([, orderItem]) => orderItem.quantity > 0);
+                      
+                      if (sizedKeys.length > 0) {
+                        const [firstKey] = sizedKeys[0];
+                        const newItems = { ...orderItems };
+                        newItems[firstKey].quantity -= 1;
+                        
+                        if (newItems[firstKey].quantity === 0) {
+                          const itemName = newItems[firstKey].name;
+                          const size = newItems[firstKey].size;
+                          delete newItems[firstKey];
+                          setOrderItems(newItems);
+                          showToast(`${itemName} (${size}) removed from order`, 'error');
+                        } else {
+                          setOrderItems(newItems);
+                          showToast(`${newItems[firstKey].name} (${newItems[firstKey].size}) quantity: ${newItems[firstKey].quantity}`, 'info');
+                        }
+                      }
                     } else {
-                      const key = `${category.id}:${item.name}`;
-                      updateQuantity(key, -1, item, category.id);
+                      // For customizable items, find the first matching key
+                      const itemKeys = Object.entries(orderItems)
+                        .filter(([key]) => key.startsWith(`${category.id}:${item.name}`))
+                        .filter(([, orderItem]) => orderItem.quantity > 0);
+                      
+                      if (itemKeys.length > 0) {
+                        const [firstKey] = itemKeys[0];
+                        const newItems = { ...orderItems };
+                        newItems[firstKey].quantity -= 1;
+                        
+                        if (newItems[firstKey].quantity === 0) {
+                          const itemName = newItems[firstKey].name;
+                          delete newItems[firstKey];
+                          setOrderItems(newItems);
+                          showToast(`${itemName} removed from order`, 'error');
+                        } else {
+                          setOrderItems(newItems);
+                          showToast(`${newItems[firstKey].name} quantity: ${newItems[firstKey].quantity}`, 'info');
+                        }
+                      }
                     }
                   }}
                   className="w-8 h-8 rounded-full border border-pink-400 text-pink-400 flex items-center justify-center hover:bg-pink-400 hover:text-black transition-colors"

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { X, Plus, Minus } from "lucide-react";
+import { condimentsData } from "@/data/menuData";
 
 interface CustomizationPopupProps {
   itemName: string;
@@ -32,6 +33,24 @@ const burgerCustomizations = [
   { id: "avocado", name: "Avocado/Guac", options: ["none", "add guacamole (+$1.50)", "extra guacamole (+$2.25)", "add avocado slices (+$1.75)"] },
   { id: "mushrooms", name: "Mushrooms", options: ["none", "add sauteed mushrooms (+$0.75)", "extra mushrooms (+$1.25)"] },
 ];
+
+// Sauce options built from condiments data (for multi-select)
+const sauceOptions = condimentsData
+  .filter(c => 
+    c.name.toLowerCase().includes('sauce') || 
+    c.name.toLowerCase().includes('ketchup') || 
+    c.name.toLowerCase().includes('mustard') || 
+    c.name.toLowerCase().includes('mayo') || 
+    c.name.toLowerCase().includes('ranch') || 
+    c.name.toLowerCase().includes('aioli') || 
+    c.name.toLowerCase().includes('sriracha') ||
+    c.name.toLowerCase().includes('buffalo') ||
+    c.name.toLowerCase().includes('honey') ||
+    c.name.toLowerCase().includes('chipotle') ||
+    c.name.toLowerCase().includes('tartar') ||
+    c.name.toLowerCase().includes('salsa')
+  )
+  .map(c => c.name);
 
 // Chicken sandwich customizations
 const chickenCustomizations = [
@@ -243,6 +262,24 @@ function getCustomizationOptions(itemName: string, category: string) {
 
 export function CustomizationPopup({ itemName, category, onConfirm, onClose }: CustomizationPopupProps) {
   const customizationOptions = useMemo(() => getCustomizationOptions(itemName, category), [itemName, category]);
+  
+  // Check if this item should show the multi-select sauces section
+  const showSaucesSection = useMemo(() => {
+    const name = itemName.toLowerCase();
+    const cat = category.toLowerCase();
+    return (
+      cat.includes("burger") || 
+      name.includes("burger") || 
+      name.includes("quarter pounder") || 
+      name.includes("big mac") || 
+      name.includes("cheeseburger") || 
+      name.includes("hamburger") ||
+      name.includes("mcdouble") ||
+      cat === "chicken-sandwiches" ||
+      (name.includes("chicken") && (name.includes("sandwich") || name.includes("crispy") || name.includes("mcchicken"))) ||
+      name.includes("wrap")
+    );
+  }, [itemName, category]);
 
   const [customizations, setCustomizations] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -258,6 +295,7 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
     });
     return initial;
   });
+  const [selectedSauces, setSelectedSauces] = useState<string[]>([]);
   const [specialNotes, setSpecialNotes] = useState("");
   const [quantity, setQuantity] = useState(1);
 
@@ -268,8 +306,23 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
     }));
   };
 
+  const toggleSauce = (sauce: string) => {
+    setSelectedSauces(prev => {
+      if (prev.includes(sauce)) {
+        return prev.filter(s => s !== sauce);
+      } else {
+        return [...prev, sauce];
+      }
+    });
+  };
+
   const handleConfirm = () => {
-    onConfirm(customizations, specialNotes, quantity);
+    // Merge selected sauces into customizations
+    const finalCustomizations = { ...customizations };
+    if (selectedSauces.length > 0) {
+      finalCustomizations.extraSauces = selectedSauces.join(", ");
+    }
+    onConfirm(finalCustomizations, specialNotes, quantity);
   };
 
   // Group customizations by type for better UX
@@ -332,6 +385,34 @@ export function CustomizationPopup({ itemName, category, onConfirm, onClose }: C
               </div>
             </div>
           ))}
+
+          {/* Multi-select Sauces Section for burgers and sandwiches */}
+          {showSaucesSection && (
+            <div>
+              <h4 className="text-pink-400 font-semibold text-sm mb-3 uppercase tracking-wide">Extra Sauces (Select Multiple)</h4>
+              <p className="text-white/50 text-xs mb-3">Select any additional sauces you&apos;d like on the side</p>
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                {sauceOptions.map((sauce) => (
+                  <button
+                    key={sauce}
+                    onClick={() => toggleSauce(sauce)}
+                    className={`px-3 py-2 rounded-lg text-sm text-left transition-all ${
+                      selectedSauces.includes(sauce)
+                        ? "bg-pink-500 text-black font-medium"
+                        : "bg-white/10 text-white/80 hover:bg-white/20"
+                    }`}
+                  >
+                    {sauce}
+                  </button>
+                ))}
+              </div>
+              {selectedSauces.length > 0 && (
+                <div className="mt-3 text-sm text-pink-400">
+                  Selected: {selectedSauces.length} sauce{selectedSauces.length !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <h4 className="text-pink-400 font-semibold text-sm mb-3 uppercase tracking-wide">Quantity</h4>
