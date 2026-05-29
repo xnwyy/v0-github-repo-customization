@@ -5,6 +5,7 @@ import { Search, X, Plus, Minus } from "lucide-react";
 import { menuCategories, itemHasSizes } from "@/data/menuData";
 import { CustomizationPopup } from "@/components/CustomizationPopup";
 import { SizeSelectionPopup } from "@/components/SizeSelectionPopup";
+import { SauceSelectionPopup } from "@/components/SauceSelectionPopup";
 import { OrderItem, MenuItem } from "@/types";
 import { useToast } from "@/components/Toast";
 
@@ -142,6 +143,11 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
     quantity: number;
   } | null>(null);
   const [sizePopupItem, setSizePopupItem] = useState<{ item: MenuItem; category: string } | null>(null);
+  const [saucePopupData, setSaucePopupData] = useState<{
+    itemName: string;
+    pendingOrderKey: string;
+    pendingOrderItem: OrderItem;
+  } | null>(null);
   const { showToast } = useToast();
 
   // Search results with scoring
@@ -178,6 +184,20 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
              item.name.toLowerCase().includes("sandwich") ||
              item.name.toLowerCase().includes("mac") ||
              item.name.toLowerCase().includes("quarter")));
+  };
+
+  const needsSauceSelection = (item: MenuItem, category: string): boolean => {
+    const name = item.name.toLowerCase();
+    return category === "burgers" ||
+           category === "chicken-sandwiches" ||
+           category === "wraps" ||
+           name.includes("burger") ||
+           name.includes("sandwich") ||
+           name.includes("wrap") ||
+           name.includes("mac") ||
+           name.includes("quarter") ||
+           name.includes("mcchicken") ||
+           name.includes("filet");
   };
 
   const updateQuantity = (key: string, change: number, item?: MenuItem, category?: string) => {
@@ -279,8 +299,6 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
 
   const handleCustomizationConfirm = (customizations: Record<string, string>, specialNotes: string, quantity: number) => {
     if (customizationPopup) {
-      const newItems = { ...orderItems };
-      
       // Create a unique key based on customizations
       const customKey = Object.entries(customizations)
         .filter(([, v]) => v !== 'regular' && v !== 'none')
@@ -312,25 +330,82 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
       
       const basePrice = customizationPopup.baseItem.price + extraCost;
       
-      if (newItems[uniqueKey]) {
-        // Same customization exists, add to quantity
-        newItems[uniqueKey].quantity += quantity;
+      // Create pending order item
+      const pendingItem: OrderItem = {
+        ...customizationPopup.baseItem,
+        price: basePrice,
+        quantity: quantity,
+        category: customizationPopup.category,
+        customizations,
+        specialNotes
+      };
+      
+      // Check if this item needs sauce selection
+      if (needsSauceSelection(customizationPopup.baseItem, customizationPopup.category)) {
+        // Show sauce selection popup
+        setSaucePopupData({
+          itemName: customizationPopup.itemName,
+          pendingOrderKey: uniqueKey,
+          pendingOrderItem: pendingItem
+        });
+        setCustomizationPopup(null);
       } else {
-        // New customization
-        newItems[uniqueKey] = {
-          ...customizationPopup.baseItem,
-          price: basePrice,
-          quantity: quantity,
-          category: customizationPopup.category,
-          customizations,
-          specialNotes
-        };
+        // No sauce selection needed, add directly
+        const newItems = { ...orderItems };
+        if (newItems[uniqueKey]) {
+          newItems[uniqueKey].quantity += quantity;
+        } else {
+          newItems[uniqueKey] = pendingItem;
+        }
+        setOrderItems(newItems);
+        showToast(`${customizationPopup.itemName} x${quantity} added to order`, 'success');
+        setCustomizationPopup(null);
+      }
+    }
+  };
+
+  const handleSauceConfirm = (sauces: { name: string; type: "regular" | "extra"; price: number }[]) => {
+    if (saucePopupData) {
+      const newItems = { ...orderItems };
+      const { pendingOrderKey, pendingOrderItem } = saucePopupData;
+      
+      // Calculate total sauce price
+      const saucePrice = sauces.reduce((total, sauce) => total + sauce.price, 0);
+      
+      // Create sauce customization string
+      const sauceCustomizations: Record<string, string> = {};
+      sauces.forEach(sauce => {
+        const priceStr = sauce.price > 0 ? ` (+$${sauce.price.toFixed(2)})` : '';
+        sauceCustomizations[`sauce_${sauce.name.toLowerCase().replace(/\s+/g, '_')}`] = 
+          `${sauce.type}${priceStr}`;
+      });
+      
+      // Update the pending item with sauce info
+      const updatedItem: OrderItem = {
+        ...pendingOrderItem,
+        price: pendingOrderItem.price + saucePrice,
+        customizations: {
+          ...pendingOrderItem.customizations,
+          ...sauceCustomizations
+        }
+      };
+      
+      // Update key to include sauces for uniqueness
+      const sauceKey = sauces.length > 0 
+        ? `:sauces_${sauces.map(s => `${s.name}_${s.type}`).join('_').slice(0, 30)}`
+        : '';
+      const finalKey = pendingOrderKey + sauceKey;
+      
+      if (newItems[finalKey]) {
+        newItems[finalKey].quantity += updatedItem.quantity;
+      } else {
+        newItems[finalKey] = updatedItem;
       }
       
       setOrderItems(newItems);
-      showToast(`${customizationPopup.itemName} x${quantity} added to order`, 'success');
+      showToast(`${saucePopupData.itemName} x${updatedItem.quantity} added to order`, 'success');
+      setSaucePopupData(null);
     }
-    setCustomizationPopup(null);
   };
 
   const getItemQuantity = (item: MenuItem, category: string): number => {
@@ -550,6 +625,17 @@ export function OrderItemsStep({ orderItems, setOrderItems, onNext, onBack }: Or
           category={sizePopupItem.category}
           onConfirm={handleSizeConfirm}
           onClose={() => setSizePopupItem(null)}
+        />
+      )}
+
+      {saucePopupData && (
+        <SauceSelectionPopup
+          itemName={saucePopupData.itemName}
+          onConfirm={handleSauceConfirm}
+          onClose={() => {
+            // If user closes without selecting, still add the item without sauces
+            handleSauceConfirm([]);
+          }}
         />
       )}
     </div>
